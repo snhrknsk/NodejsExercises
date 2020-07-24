@@ -1,0 +1,4 @@
+Please install EJS in this directory
+1. npm install ejs
+2. change directory ch3_1 or ch3_2
+3. input command "node index.js"

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title><%=title%></title>
+</head>
+<body>
+    <ul>
+        <% for(var i=0;i<3;i++){%>
+        <li><%=i %></li>
+        <% }%>
+    </ul>
+    <%- contents1 %>
+    <%=contents2 %>
+    <ol>
+        <% arr.forEach(function(val){ %>
+            <li><%=val %></li>
+        <% }) %>
+    </ol>
+</body>
+</html>
