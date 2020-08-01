@@ -24,6 +24,15 @@ app.get('/', (req, res) => {
     });
 });
 
+app.get('/update', (req, res) => {
+    con.query('select * from title', function(err, results, fields){
+        if(err) throw err;
+        res.render('update.ejs', {
+            content: results
+        });
+    });
+});
+
 app.listen(1234, ()=>{
     console.log('Start Server');
 });

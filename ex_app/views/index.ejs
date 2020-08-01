@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <form action="update" method="POST">
+      <input type="text" name="username" value="<%=name %>"><br>
+      <textarea placeholder="Message" name="message"></textarea>
+      <font color="red"><%=emptyMessageError %></font><br>
+      <button type="submit">POST</button>
+    </form><br>
+    <h1><%=title2 %></h1>
+    <% messages.forEach(function(val){ %>
+      <h2><%=val.username %></h2>
+      <%=val.date %><br>
+      <%=val.message %><br>
+    <% }) %>
+  </body>
+</html>

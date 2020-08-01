@@ -2,12 +2,12 @@
 
 Load Map
 
-1. Plactice instruction
+1. Practice instruction
 This repository is for placticing Node.js.
 Based on JavaScriptエンジニアのためのNode.js入門
 I will write sample code in this book and run them.
-2. Plactice connect with MySQL
-3. Plactice js Framework
+2. Practice connect with MySQL
+3. Practice js Framework
 4. Create App
 5. Deploy app to WEB
 
