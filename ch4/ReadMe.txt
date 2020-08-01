@@ -7,3 +7,8 @@ Please install EJS in this directory
 
 I don't know why, but need "npm install cookie-parser" etc... separately
 This book says that cookie-parser ... packages are included express framework from initial installation, but I need install manually.
+
+In ch04_7
+1. express --view=ejs
+2. npm install
+3. input command "node ./bin/www" or "npm start"
