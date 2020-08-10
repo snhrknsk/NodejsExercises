@@ -30,6 +30,16 @@ mongoose.connect(dbURL, {useNewUrlParser: true, useUnifiedTopology: true}, (err)
   }
 });
 
+//
+passport.serializeUser((user, done)=>{
+  done(null, user._id);
+});
+passport.deserializeUser((id, done)=>{
+  User.findOne({_id: id}, (err, user)=>{
+    done(err, user);
+  });
+});
+
 //Top page
 app.get("/", (req, res, next) => {
   var username = req.query.name == undefined ? 'No Name' : req.query.name;
@@ -37,9 +47,7 @@ app.get("/", (req, res, next) => {
     Message.find({}, (err, msgs)=> {
       return res.render('index.ejs', 
       {
-        title: 'Hello World',
-        title2: 'Free chat',
-        name: username,
+        user: req.session && req.session.user ? req.session.user : null,
         messages: msgs,
         emptyMessageError: 'Input message'
       });
@@ -48,9 +56,7 @@ app.get("/", (req, res, next) => {
     Message.find({}, (err, msgs)=> {
       return res.render('index.ejs', 
       {
-        title: 'Hello World',
-        title2: 'Free chat',
-        name: username,
+        user: req.session && req.session.user ? req.session.user : null,
         messages: msgs,
         emptyMessageError: ''
       });
@@ -65,6 +71,7 @@ app.get("/signin", (req, res, next)=>{
 
 app.post("/signin", (req, res, next)=>{
   var time = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
+  console.log(time + ' : ' + req.body.username + ' ' + req.body.password);
   var newUser = new User({
     username: req.body.username,
     password: req.body.password,
@@ -79,39 +86,49 @@ app.post("/signin", (req, res, next)=>{
 })
 
 app.get("/login", (req, res, next)=>{
-  return res.render('login');
+  return res.render('login.ejs');
 });
 
-app.post('/login', passport.authenticate('local', {
-    successRedirect: '/',
-    failureRedirect: '/login',
+app.post('/login', passport.authenticate('local'), (req, res, next)=>{
+  User.findOne({_id: req.session.passport.user}, (err, user)=>{
+    if(err || !user || !req.session) {
+      console.log('Disp login screen.')
+      return res.redirect('/login.ejs');
+    } else {
+      req.session.user = {
+        username: user.username,
+      };
+      return res.redirect("/");
+    }
   })
-);
+});
 
 //
 passport.use(new LocalStrategy((username, password, done)=>{
+  console.log(username + ' : ' + password);
   User.findOne({username: username}, (err, user)=>{
     if(err) {
+      console.log('Error ' + err);
       return done(err);
     }
     if(!user) {
+      console.log('Not found user.');
       return done(null, false, {message: 'Incorrect Username.'});
     }
-    if(user.password !== passport) {
+    if(user.password !== password) {
+      console.log('Incorrect password. saved = ' + user.password + ' input = ' + password);
       return done(null, false, {message: 'Incorrect Password.'})
     }
+    console.log('Success to login');
     return done(null, user);
   });
 }));
-//
-passport.serializeUser((user, done)=>{
-  done(numm, user._id);
-});
-passport.deserializeUser((id, done)=>{
-  User.findOne({_id: id}, (err, user)=>{
-    done(err, user);
-  });
-});
+
+// app.post('/login', passport.authenticate('local', {
+//     successRedirect: '/',
+//     failureRedirect: '/login',
+//   })
+// );
 
 //Save userinfo and redirect
 app.post("/update", (req, res, next) => {
@@ -128,7 +145,7 @@ app.post("/update", (req, res, next) => {
   newMessage.save((err)=>{
     if(err) throw err;
     console.log('Success to save user : ' + newMessage.username + ' time : ' + time);
-    return res.redirect("/?name=" + req.body.username);
+    return res.redirect("/");
   });
 });
 
