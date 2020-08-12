@@ -5,7 +5,9 @@ var mongoose = require('mongoose');
 var bodyparser = require('body-parser');
 var passport = require('passport');
 var LocalStrategy = require('passport-local');
+var TwitterStrategy = require('passport-twitter').Strategy;
 var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 
 var ejs = require('ejs');
 var Message = require('./schema/Message');
@@ -14,12 +16,31 @@ var app = express();
 
 //app.use(bodyparser());//this is deprecated
 app.use(bodyparser.urlencoded({extended: true}));
-app.use(session( {secret: 'HogeFuga'}));//temporary session name
+app.use(session( {
+  secret: 'HogeFuga',
+  resave: false,
+  saveUninitialized: false,
+  store: new MongoStore({
+    mongooseConnection: mongoose.connection,
+    db: 'session',
+    ttl: 14*24*60*60
+  }),
+  // cookie: {
+  //   secure: true
+  // },
+}));//temporary session name
 app.use(passport.initialize());
 app.use(passport.session());
 
 const dbURL = 'mongodb://localhost:27017/testdb';
 const serverPort = 3000;
+
+//set twitter api key to your environment variable
+const twitterConfig = {
+  consumerKey: process.env.TWITTER_COMSUMER_KEY, 
+  consumerSecret: process.env.TWITTER_COMSUMER_SECRET,
+  callbackURL: process.env.TWITTER_CALLBACK_URL,
+};
 
 //DB Connection
 mongoose.connect(dbURL, {useNewUrlParser: true, useUnifiedTopology: true}, (err) => {
@@ -124,11 +145,42 @@ passport.use(new LocalStrategy((username, password, done)=>{
   });
 }));
 
-// app.post('/login', passport.authenticate('local', {
-//     successRedirect: '/',
-//     failureRedirect: '/login',
-//   })
-// );
+passport.use(new TwitterStrategy(twitterConfig, (token, tokenSecret, profile, done)=>{
+  User.findOne({twitter_profile_id: profile.id}, (err, user)=>{
+    if(err) {
+      console.log('Not found user. Err= ' + err);
+      return done(err);
+    } else if(!user) {
+      console.log('Found user');
+      var _user = {
+        username: profile.displayName,
+        twitter_profile_id: profile.id,
+      };
+      var newUser = new User(_user);
+      newUser.save((err)=>{
+        if(err) {
+          throw err;
+        }
+        return done(null, newUser);
+      });
+    } else {
+      return done(null, user);
+    }
+  })
+}));
+
+app.get('/oauth/twitter', passport.authenticate('twitter'));
+app.get('/oauth/twitter/callback', passport.authenticate('twitter'), (req, res, next)=>{
+  User.findOne({_id: req.session.passport.user}, (err, user)=>{
+    if(err || !req.session) {
+      return res.redirect('oauth/twitter');
+    }
+    req.session.user = {
+      username: user.username,
+    }
+    return res.redirect("/");
+  })
+});
 
 //Save userinfo and redirect
 app.post("/update", (req, res, next) => {
@@ -136,7 +188,8 @@ app.post("/update", (req, res, next) => {
     return res.redirect("/?empty=true");
   }
   var time = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
-  var username = req.body.username == '' ? 'No Name' : req.body.username ;
+  // var username = req.body.username == '' ? 'No Name' : req.body.username ;
+  var username = req.session.user.username;
   var newMessage = new Message({
     username: username,
     message: req.body.message,
