@@ -206,6 +206,28 @@ app.post("/update", (req, res, next) => {
   });
 });
 
+//500 Test
+app.get("/testpage", (req, res, next)=>{
+  throw new Error("Test Error");
+});
+
+app.use((req, res, next)=>{
+  var err = new Error('Not Found');
+  err.status = 404;
+  return res.render('error.ejs', {
+    message: err.message,
+    status: err.status,
+  });
+});
+
+app.use((err, req, res, next)=>{
+  res.status(err.status || 500);
+  return res.render('error.ejs', {
+    message: err.message,
+    status: err.status || 500,
+  });
+});
+
 var server = http.createServer(app);
 server.listen(serverPort, ()=>{
   logger.info('Start Server');
