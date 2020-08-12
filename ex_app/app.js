@@ -8,6 +8,7 @@ var LocalStrategy = require('passport-local');
 var TwitterStrategy = require('passport-twitter').Strategy;
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
+var logger = require('./lib/logger');
 
 var ejs = require('ejs');
 var Message = require('./schema/Message');
@@ -45,9 +46,9 @@ const twitterConfig = {
 //DB Connection
 mongoose.connect(dbURL, {useNewUrlParser: true, useUnifiedTopology: true}, (err) => {
   if(err) {
-    console.log(err);
+    logger.error(err);
   } else {
-    console.log('Successfully connected to MongoDB');
+    logger.info('Successfully connected to MongoDB');
   }
 });
 
@@ -92,7 +93,7 @@ app.get("/signin", (req, res, next)=>{
 
 app.post("/signin", (req, res, next)=>{
   var time = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
-  console.log(time + ' : ' + req.body.username + ' ' + req.body.password);
+  logger.info(time + ' : ' + req.body.username + ' ' + req.body.password);
   var newUser = new User({
     username: req.body.username,
     password: req.body.password,
@@ -113,7 +114,7 @@ app.get("/login", (req, res, next)=>{
 app.post('/login', passport.authenticate('local'), (req, res, next)=>{
   User.findOne({_id: req.session.passport.user}, (err, user)=>{
     if(err || !user || !req.session) {
-      console.log('Disp login screen.')
+      logger.info('Disp login screen.')
       return res.redirect('/login.ejs');
     } else {
       req.session.user = {
@@ -126,21 +127,21 @@ app.post('/login', passport.authenticate('local'), (req, res, next)=>{
 
 //
 passport.use(new LocalStrategy((username, password, done)=>{
-  console.log(username + ' : ' + password);
+  logger.info(username + ' : ' + password);
   User.findOne({username: username}, (err, user)=>{
     if(err) {
-      console.log('Error ' + err);
+      logger.error('Error ' + err);
       return done(err);
     }
     if(!user) {
-      console.log('Not found user.');
+      logger.error('Not found user.');
       return done(null, false, {message: 'Incorrect Username.'});
     }
     if(user.password !== password) {
-      console.log('Incorrect password. saved = ' + user.password + ' input = ' + password);
+      logger.error('Incorrect password. saved = ' + user.password + ' input = ' + password);
       return done(null, false, {message: 'Incorrect Password.'})
     }
-    console.log('Success to login');
+    logger.info('Success to login');
     return done(null, user);
   });
 }));
@@ -148,13 +149,15 @@ passport.use(new LocalStrategy((username, password, done)=>{
 passport.use(new TwitterStrategy(twitterConfig, (token, tokenSecret, profile, done)=>{
   User.findOne({twitter_profile_id: profile.id}, (err, user)=>{
     if(err) {
-      console.log('Not found user. Err= ' + err);
+      logger.error('Not found user. Err= ' + err);
       return done(err);
     } else if(!user) {
-      console.log('Found user');
+      logger.error('Found user');
+      var time = new Date().toLocaleString({ timeZone: 'Asia/Tokyo' });
       var _user = {
         username: profile.displayName,
         twitter_profile_id: profile.id,
+        date: time
       };
       var newUser = new User(_user);
       newUser.save((err)=>{
@@ -171,6 +174,7 @@ passport.use(new TwitterStrategy(twitterConfig, (token, tokenSecret, profile, do
 
 app.get('/oauth/twitter', passport.authenticate('twitter'));
 app.get('/oauth/twitter/callback', passport.authenticate('twitter'), (req, res, next)=>{
+  logger.info('Callback twitter oauth. ' + req.session.passport);
   User.findOne({_id: req.session.passport.user}, (err, user)=>{
     if(err || !req.session) {
       return res.redirect('oauth/twitter');
@@ -197,12 +201,12 @@ app.post("/update", (req, res, next) => {
   });
   newMessage.save((err)=>{
     if(err) throw err;
-    console.log('Success to save user : ' + newMessage.username + ' time : ' + time);
+    logger.info('Success to save user message : ' + newMessage.username + ' time : ' + time);
     return res.redirect("/");
   });
 });
 
 var server = http.createServer(app);
 server.listen(serverPort, ()=>{
-  console.log('Start Server');
+  logger.info('Start Server');
 });
