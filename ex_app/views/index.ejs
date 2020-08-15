@@ -9,6 +9,9 @@
     <% if (user) { %>
       <h2><%=user.username %> is Login</h2>  
       <form action="update" method="POST">
+        <% if (locals.csrf) {%>
+        <input type="hidden" name="_csrf" value="<%=csrf %>"></input>
+        <% }%>
         <textarea placeholder="Message" name="message"></textarea>
         <font color="red"><%=emptyMessageError %></font><br>
         <button type="submit">POST</button>

@@ -10,11 +10,13 @@ var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var logger = require('./lib/logger');
 var helmet = require('helmet');
+var csrf = require('csurf');
 
 var ejs = require('ejs');
 var Message = require('./schema/Message');
 const User = require('./schema/User');
 var app = express();
+var csrfProtection = csrf();
 
 //app.use(bodyparser());//this is deprecated
 app.use(bodyparser.urlencoded({extended: true}));
@@ -65,7 +67,7 @@ passport.deserializeUser((id, done)=>{
 });
 
 //Top page
-app.get("/", (req, res, next) => {
+app.get("/", csrfProtection, (req, res, next) => {
   var username = req.query.name == undefined ? 'No Name' : req.query.name;
   if(Boolean(req.query.empty)) {
     Message.find({}, (err, msgs)=> {
@@ -73,7 +75,8 @@ app.get("/", (req, res, next) => {
       {
         user: req.session && req.session.user ? req.session.user : null,
         messages: msgs,
-        emptyMessageError: 'Input message'
+        emptyMessageError: 'Input message',
+        csrf : req.csrfToken()
       });
     });
   } else {
@@ -82,7 +85,8 @@ app.get("/", (req, res, next) => {
       {
         user: req.session && req.session.user ? req.session.user : null,
         messages: msgs,
-        emptyMessageError: ''
+        emptyMessageError: '',
+        csrf : req.csrfToken()
       });
     });
   }
@@ -189,7 +193,7 @@ app.get('/oauth/twitter/callback', passport.authenticate('twitter'), (req, res, 
 });
 
 //Save userinfo and redirect
-app.post("/update", (req, res, next) => {
+app.post("/update", csrfProtection, (req, res, next) => {
   if(req.body.message == '') {
     return res.redirect("/?empty=true");
   }
@@ -206,6 +210,10 @@ app.post("/update", (req, res, next) => {
     logger.info('Success to save user message : ' + newMessage.username + ' time : ' + time);
     return res.redirect("/");
   });
+});
+
+app.get("/update", csrfProtection, (req, res, next)=>{
+  return res.render('update.ejs', {csrf : req.csrfToken()});
 });
 
 //500 Test
@@ -225,11 +233,16 @@ app.use((req, res, next)=>{
 app.use((err, req, res, next)=>{
   logger.error(err.message);
   logger.error(err.stack);
-  res.status(err.status || 500);
+  if (err.code === 'EBADCSRFTOKEN') {
+    res.status(403);
+  } else {
+    res.status(err.status || 500);
+  }
   return res.render('error.ejs', {
     message: err.message,
     status: err.status || 500,
   });
+
 });
 
 var server = http.createServer(app);
