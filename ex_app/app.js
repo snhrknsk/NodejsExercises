@@ -9,6 +9,7 @@ var TwitterStrategy = require('passport-twitter').Strategy;
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var logger = require('./lib/logger');
+var helmet = require('helmet');
 
 var ejs = require('ejs');
 var Message = require('./schema/Message');
@@ -32,6 +33,7 @@ app.use(session( {
 }));//temporary session name
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(helmet());
 
 const dbURL = 'mongodb://localhost:27017/testdb';
 const serverPort = 3000;
@@ -221,6 +223,8 @@ app.use((req, res, next)=>{
 });
 
 app.use((err, req, res, next)=>{
+  logger.error(err.message);
+  logger.error(err.stack);
   res.status(err.status || 500);
   return res.render('error.ejs', {
     message: err.message,
