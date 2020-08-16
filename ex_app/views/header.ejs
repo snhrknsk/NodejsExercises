@@ -1,0 +1,11 @@
+<nav id="header">
+    <% if (user) { %>
+        <span class="nav_item"><%=user.username %> is Login</span>
+    <% } else { %>
+        <span class="nav_item">
+            <a href="/signin">Singup</a>
+            <a href="/login">Login</a>
+            <a href="/oauth/twitter">Twitter</a>
+        </span>
+    <% } %>  
+</nav>

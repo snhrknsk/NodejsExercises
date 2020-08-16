@@ -36,9 +36,10 @@ app.use(session( {
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(helmet());
+app.use("/css", express.static(path.join(__dirname, 'css')));
 
 const dbURL = 'mongodb://localhost:27017/testdb';
-const serverPort = 3000;
+const serverPort = 80;
 
 //set twitter api key to your environment variable
 const twitterConfig = {
