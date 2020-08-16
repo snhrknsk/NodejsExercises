@@ -217,6 +217,13 @@ app.get("/update", csrfProtection, (req, res, next)=>{
   return res.render('update.ejs', {csrf : req.csrfToken()});
 });
 
+app.get("/logout", (req, res, next)=>{
+  logger.info("Logout called.");
+  req.logout();
+  delete req.session.user;
+  return res.redirect("/");
+});
+
 //500 Test
 app.get("/testpage", (req, res, next)=>{
   throw new Error("Test Error");

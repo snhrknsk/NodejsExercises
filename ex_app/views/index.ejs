@@ -9,14 +9,16 @@
     <%- include('./header'); %>
     <section id="main">
       <h1 id="title">Free Chat</h1>
-      <form action="update" method="POST">
-        <% if (locals.csrf) {%>
-        <input type="hidden" name="_csrf" value="<%=csrf %>"></input>
-        <% }%>
-        <textarea placeholder="Message" name="message" id="textarea-message"></textarea>
-        <font color="red"><%=emptyMessageError %></font><br>
-        <button type="submit" id="submit-button">POST</button>
-      </form><br>
+      <% if (user) { %>
+        <form action="update" method="POST">
+          <% if (locals.csrf) {%>
+          <input type="hidden" name="_csrf" value="<%=csrf %>"></input>
+          <% }%>
+          <textarea placeholder="Message" name="message" id="textarea-message"></textarea>
+          <font color="red"><%=emptyMessageError %></font><br>
+          <button type="submit" id="submit-button">POST</button>
+        </form><br>
+      <% } %>
       <h1 id="title">Comment List</h1>
       <div class="msg">
         <div class="msg_meta">

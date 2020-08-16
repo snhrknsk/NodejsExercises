@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8">
     <title>Signin</title>
+    <link href="/css/app.css" rel="stylesheet" type="text/css"/>
   </head>
   <body>
-    <h1>Signin</h1>
-    <form action="/login" method="POST">
-      <input type="text" name="username" placeholder="name"><br>
-      <input type="password" placeholder="password" name="password"><br>
-      <button type="submit">POST</button>
-    </form>
+    <%- include('./header'); %>
+    <section id="main">
+      <h1 id="title">Signin</h1>
+      <form action="/login" method="POST">
+        <input type="text" name="username" placeholder="name"><br>
+        <input type="password" placeholder="password" name="password"><br>
+        <button type="submit">POST</button>
+      </form>
+    </section>
   </body>
 </html>
