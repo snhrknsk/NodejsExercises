@@ -1,3 +1,5 @@
+var https = require('https');
+var fs = require('fs');
 var http = require('http');
 var express = require('express');
 var path = require('path');
@@ -40,6 +42,11 @@ app.use("/css", express.static(path.join(__dirname, 'css')));
 
 const dbURL = 'mongodb://localhost:27017/testdb';
 const serverPort = 80;
+const serverSSLPort = 443;
+var httpsOptions = {
+    key: fs.readFileSync(process.env.SERVER_PEM_KEY),
+    cert: fs.readFileSync(process.env.SERVER_SSL_CRT_KEY)
+};
 
 //set twitter api key to your environment variable
 const twitterConfig = {
@@ -253,7 +260,12 @@ app.use((err, req, res, next)=>{
 
 });
 
-var server = http.createServer(app);
-server.listen(serverPort, ()=>{
+var server = https.createServer(httpsOptions, app);
+server.listen(serverSSLPort, ()=>{
   logger.info('Start Server');
 });
+
+//var server = http.createServer(app);
+//server.listen(serverPort, ()=>{
+//  logger.info('Start Server');
+//});
